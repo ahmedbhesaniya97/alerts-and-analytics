@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { AudioLines, ChevronsUpDown, LayoutGrid, Loader2, Menu, PanelLeft, Play } from 'lucide-react'
+import { AudioLines, ChevronsUpDown, LayoutGrid, Loader2, Menu, PanelLeft } from 'lucide-react'
 import { DrillDrawer, SessionDrawer, SimulateModal } from './components/Shared'
 import { Button, Toasts } from './components/ui'
 import { fmtDateTime } from './lib/analytics'
@@ -106,14 +106,11 @@ export default function App() {
                 </span>
               )
             )}
-            <Button variant="primary" onClick={() => setSimulate(true)} disabled={!!queue}>
-              <Play size={11} fill="currentColor" /> Simulate calls
-            </Button>
           </div>
         </div>
 
         <Routes>
-          <Route path="/analytics" element={<Analytics onSimulate={() => setSimulate(true)} />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/alerts/new" element={<AlertEditor />} />
           <Route path="/alerts/:id" element={<AlertEditor />} />

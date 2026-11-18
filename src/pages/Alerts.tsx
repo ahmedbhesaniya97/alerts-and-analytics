@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Highcharts from 'highcharts'
 import HighchartsReact from 'highcharts-react-official'
-import { Copy, Pencil, Play, Plus, Search, SearchX, ShieldCheck, Trash2, X } from 'lucide-react'
-import { ChannelIcon, IncidentDrawer, SeverityBadge, SimulateModal, StatusBadge, channelTarget } from '../components/AlertParts'
+import { Copy, Pencil, Plus, Search, SearchX, ShieldCheck, Trash2, X } from 'lucide-react'
+import { ChannelIcon, IncidentDrawer, SeverityBadge, channelTarget } from '../components/AlertParts'
 import { Button, Confirm, Empty, Segmented, Toggle } from '../components/ui'
 import { CATEGORIES, DAY, HOUR, MIN, SEVERITIES, SEV_COLOR, SEV_LABEL, SEV_RANK, affectedCalls, customCalls, fmtAgo, fmtWhen, metricOf, rowShort, type AlertConfig, type CategoryId, type Severity } from '../lib/alerts'
 import { useAlerts, type IncidentRow, type IncidentStatus } from '../lib/alertsStore'
@@ -50,7 +50,6 @@ function AlertsHome() {
   const [range, setRange] = useState<Range>('7d')
   const [severity, setSeverity] = useState<'all' | Severity>('all')
   const [category, setCategory] = useState<'all' | CategoryId>('all')
-  const [simulating, setSimulating] = useState(false)
   const [openIncident, setOpenIncident] = useState<string | null>(null)
   // History-only filters (set directly or by clicking charts).
   const [query, setQuery] = useState('')
@@ -113,9 +112,6 @@ function AlertsHome() {
           <p>What your alerts caught, how often, and what still needs attention.</p>
         </div>
         <div className="row">
-          <Button onClick={() => setSimulating(true)}>
-            <Play size={11} fill="currentColor" /> Simulate issue
-          </Button>
           <Button variant="primary" onClick={() => nav('/alerts/new')}>
             <Plus size={13} /> Create alert
           </Button>
@@ -263,8 +259,8 @@ function AlertsHome() {
             <div className="card">
               {history.length === 0 ? (
                 events.length === 0 ? (
-                  <Empty icon={<ShieldCheck size={18} />} title="All clear" actions={<Button onClick={() => setSimulating(true)}><Play size={11} fill="currentColor" /> Simulate issue</Button>}>
-                    None of your alerts triggered in this range. Simulate an issue to see one fire.
+                  <Empty icon={<ShieldCheck size={18} />} title="All clear">
+                    None of your alerts triggered in this range.
                   </Empty>
                 ) : (
                   <Empty icon={<SearchX size={18} />} title="No events match" actions={<Button onClick={clearAll}>Clear filters</Button>}>
@@ -280,7 +276,6 @@ function AlertsHome() {
       )}
 
       {openIncident && <IncidentDrawer id={openIncident} onClose={() => setOpenIncident(null)} onEdit={(id) => nav(`/alerts/${id}`)} />}
-      {simulating && <SimulateModal alerts={alerts} onClose={() => setSimulating(false)} />}
     </>
   )
 }
@@ -430,7 +425,6 @@ function HistoryTable({ rows, now, onOpen }: { rows: Event[]; now: number; onOpe
               <th>Severity</th>
               <th>Alert</th>
               <th className="hide-sm">Call ID</th>
-              <th>Status</th>
               <th>Timestamp</th>
             </tr>
           </thead>
@@ -443,7 +437,6 @@ function HistoryTable({ rows, now, onOpen }: { rows: Event[]; now: number; onOpe
                   <div className="small muted truncate">{e.typeName} · {e.groupLabel}</div>
                 </td>
                 <td className="hide-sm"><code className="mono" style={{ textTransform: 'none' }}>{e.callId}</code></td>
-                <td><StatusBadge status={e.status} /></td>
                 <td className="small">
                   {fmtWhen(e.startedAt, now)}
                   <div className="faint">{fmtAgo(e.startedAt, now)}</div>

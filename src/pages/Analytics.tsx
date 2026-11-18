@@ -1,17 +1,12 @@
-import { useMemo, useState } from 'react'
-import { Check } from 'lucide-react'
-import { ChartEditor, ChartsSection, type ChartEditorTarget } from '../components/ChartsSection'
+import { useMemo } from 'react'
 import { FilterBar } from '../components/Shared'
-import { TopicsSection, type TopicEditorTarget } from '../components/TopicsSection'
-import { Button, Callout } from '../components/ui'
+import { Callout } from '../components/ui'
 import { PALETTE, filterSessions, pct, rangeLabel, sessionStatus } from '../lib/analytics'
 import { useStore } from '../lib/store'
 
-/** One page: overview numbers, the charts the user designed, and the topics they are built from. */
-export default function Analytics({ onSimulate }: { onSimulate: () => void }) {
+/** Overview numbers for the calls in the current filter. */
+export default function Analytics() {
   const { state, index, clock, setDrill } = useStore()
-  const [topicEditor, setTopicEditor] = useState<TopicEditorTarget>(null)
-  const [chartEditor, setChartEditor] = useState<ChartEditorTarget>(null)
   const sessions = useMemo(() => filterSessions(state, index, clock), [state, index, clock])
 
   const overview = useMemo(() => {
@@ -40,13 +35,6 @@ export default function Analytics({ onSimulate }: { onSimulate: () => void }) {
     return { analysed, attention, noTranscript, ok, finished, conf: confN ? confSum / confN : null }
   }, [sessions, index])
 
-  const steps = [
-    { done: index.liveTopics.length > 0, t: 'Create your first topic', d: 'Tell the AI what to look for in each call — for example “Did the caller get what they needed?”', action: <Button variant="primary" onClick={() => setTopicEditor('new')}>Create topic</Button> },
-    { done: state.results.length > 0, t: 'Let some calls finish', d: 'Topics are extracted after each call ends. Simulate a batch to see it work.', action: <Button variant="primary" onClick={onSimulate}>Simulate calls</Button> },
-    { done: state.charts.length > 0, t: 'Design a chart', d: 'Turn any topic into a chart. Nothing is charted until you choose it.', action: <Button variant="primary" onClick={() => setChartEditor({ id: null })}>New chart</Button> },
-  ]
-  const doneCount = steps.filter((s) => s.done).length
-  const nextStep = steps.findIndex((s) => !s.done)
   const range = rangeLabel(state.filters)
 
   return (
@@ -54,55 +42,14 @@ export default function Analytics({ onSimulate }: { onSimulate: () => void }) {
       <div className="page-head">
         <div>
           <h1>Analytics</h1>
-          <p>Decide what to learn from every call, then design the charts that show it. Click any number or chart value to see the calls behind it.</p>
-        </div>
-        <div className="row">
-          <a className="btn" href="#charts" onClick={(e) => { e.preventDefault(); document.getElementById('charts')?.scrollIntoView({ behavior: 'smooth' }) }}>
-            Charts · {state.charts.length}
-          </a>
-          <a className="btn" href="#topics" onClick={(e) => { e.preventDefault(); document.getElementById('topics')?.scrollIntoView({ behavior: 'smooth' }) }}>
-            Topics · {index.liveTopics.length}
-          </a>
+          <p>How your calls are going. Click any number to see the calls behind it.</p>
         </div>
       </div>
-
-      {doneCount < steps.length && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div className="card-head">
-            <div>
-              <h3>Before your first reading</h3>
-              <div className="sub">Three steps from an empty workspace to your own analytics.</div>
-            </div>
-            <span className="mono faint">
-              {doneCount} of {steps.length} ready
-            </span>
-          </div>
-          <div className="card-body stack" style={{ gap: 8 }}>
-            {steps.map((s, i) => (
-              <div key={s.t} className={`step ${s.done ? 'done' : i === nextStep ? 'next' : ''}`}>
-                <span className="n">{s.done ? <Check size={13} /> : i + 1}</span>
-                <div className="grow">
-                  <div className="t">{s.t}</div>
-                  <div className="d">{s.d}</div>
-                </div>
-                {!s.done && i === nextStep && s.action}
-                {s.done && <span className="mono faint">Done</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <FilterBar />
 
       {state.sessions.length === 0 ? (
-        <Callout>
-          No calls yet. Analytics fill in as calls finish —{' '}
-          <button className="link" onClick={onSimulate}>
-            simulate a batch of calls
-          </button>{' '}
-          to try it.
-        </Callout>
+        <Callout>No calls yet. Analytics fill in as calls finish.</Callout>
       ) : (
         <div className="grid metrics">
           <Metric label="Calls" value={sessions.length.toLocaleString()} foot={range} onClick={() => setDrill({ title: 'All calls', subtitle: range, sessionIds: sessions.map((s) => s.id) })} />
@@ -132,10 +79,6 @@ export default function Analytics({ onSimulate }: { onSimulate: () => void }) {
         </div>
       )}
 
-      <ChartsSection sessions={sessions} onEdit={setChartEditor} onNewTopic={() => setTopicEditor('new')} />
-      <TopicsSection editing={topicEditor} setEditing={setTopicEditor} onChart={(topicId) => setChartEditor({ id: null, topicId })} />
-
-      {chartEditor && <ChartEditor key={chartEditor.id ?? `new-${chartEditor.topicId ?? ''}`} target={chartEditor} onClose={() => setChartEditor(null)} />}
     </>
   )
 }
