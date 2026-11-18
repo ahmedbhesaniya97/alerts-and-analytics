@@ -1,12 +1,16 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { ChartEditor, ChartsSection, type ChartEditorTarget } from '../components/ChartsSection'
 import { FilterBar } from '../components/Shared'
+import { TopicsSection, type TopicEditorTarget } from '../components/TopicsSection'
 import { Callout } from '../components/ui'
 import { PALETTE, filterSessions, pct, rangeLabel, sessionStatus } from '../lib/analytics'
 import { useStore } from '../lib/store'
 
-/** Overview numbers for the calls in the current filter. */
+/** One page: overview numbers, the charts the user designed, and the topics they are built from. */
 export default function Analytics() {
   const { state, index, clock, setDrill } = useStore()
+  const [topicEditor, setTopicEditor] = useState<TopicEditorTarget>(null)
+  const [chartEditor, setChartEditor] = useState<ChartEditorTarget>(null)
   const sessions = useMemo(() => filterSessions(state, index, clock), [state, index, clock])
 
   const overview = useMemo(() => {
@@ -42,7 +46,7 @@ export default function Analytics() {
       <div className="page-head">
         <div>
           <h1>Analytics</h1>
-          <p>How your calls are going. Click any number to see the calls behind it.</p>
+          <p>Decide what to learn from every call, then design the charts that show it. Click any number or chart value to see the calls behind it.</p>
         </div>
       </div>
 
@@ -79,6 +83,11 @@ export default function Analytics() {
         </div>
       )}
 
+
+      <ChartsSection sessions={sessions} onEdit={setChartEditor} onNewTopic={() => setTopicEditor('new')} />
+      <TopicsSection editing={topicEditor} setEditing={setTopicEditor} onChart={(topicId) => setChartEditor({ id: null, topicId })} />
+
+      {chartEditor && <ChartEditor key={chartEditor.id ?? `new-${chartEditor.topicId ?? ''}`} target={chartEditor} onClose={() => setChartEditor(null)} />}
     </>
   )
 }
